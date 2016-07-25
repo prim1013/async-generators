@@ -179,3 +179,18 @@ getUserFriends( 4 ).then(
         console.log( "getUserFriends() -- Error:" );
         console.log( reason );
     } );
+
+module.exports = {
+    run: function () {
+        return getUserFriends( 4 ).then(
+            function ( value ) {
+                return value;
+                console.log( "getUserFriends() -- Result:" );
+                console.log( JSON.stringify( value, null, 2 ) );
+            },
+            function ( reason ) {
+                console.log( "getUserFriends() -- Error:" );
+                console.log( reason );
+            } );
+    }
+};
