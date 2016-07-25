@@ -4,24 +4,36 @@ var asyncGenerator = require( '../index' );
 describe( 'Async Generator Tests', function () {
 
     it( 'should work', function ( done ) {
-        var expected = {
-            "user": {
-                "id": 4,
-                "name": "Sarah"
-            },
-            "friends": [
-                {
-                    "id": 201,
-                    "rootID": 4,
-                    "name": "Joanna"
-                },
-                {
-                    "id": 301,
-                    "rootID": 4,
-                    "name": "Tricia"
-                }
+        var expected = [
+            {id: 4, name: 'Sarah'},
+            [
+                {id: 201, rootID: 4, name: 'Joanna'},
+                {id: 301, rootID: 4, name: 'Tricia'}
             ]
+        ];
+        var getUser = function ( id ) {
+            return Promise.resolve( {
+                id: id,
+                name: "Sarah"
+            } );
         };
+        var getFriends = function ( userID ) {
+
+            if ( !userID ) {
+                throw (new Error( 'No userID found' ));
+            }
+
+            return Promise.resolve( [{
+                id: 201,
+                rootID: userID,
+                name: "Joanna"
+            }, {
+                id: 301,
+                rootID: userID,
+                name: "Tricia"
+            }] );
+        };
+        var promises = [getUser, getFriends];
         var makeAssertions = function ( value ) {
             assert.deepEqual( value, expected );
             done();
@@ -31,7 +43,7 @@ describe( 'Async Generator Tests', function () {
             done();
         };
 
-        asyncGenerator.run().then( makeAssertions, onRejected );
-
+        asyncGenerator.run( 4, promises ).then( makeAssertions, onRejected );
     } );
+
 } );
