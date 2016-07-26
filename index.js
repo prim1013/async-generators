@@ -5,7 +5,6 @@
 // into the next iteration of the generator. In this manner, the proxy can manage an
 // internal promise chain that ultimately manifests as a single promise returned by
 // the proxy.
-
 module.exports = {
     run: function ( id, promises ) {
         // I am a generator function. Such steps! Much iteration! So confusion!
@@ -21,11 +20,9 @@ module.exports = {
         };
 
         var createPromiseWorkflow = function ( generatorFunction ) {
-
             // I proxy the generator and "reduce" its iteration values down to a single value,
             // represented by a promise. Returns a promise.
             var iterationProxy = function () {
-
                 // When we call the generator function, the body of the generator is NOT
                 // executed. Instead, an iterator is returned that can iterate over the
                 // segments of the generator body, delineated by yield statements.
@@ -36,7 +33,7 @@ module.exports = {
                 // NOTE: This function calls itself recursively, building up a promise-chain
                 // that represents each generator iteration step.
                 var pipeResultBackIntoGenerator = function ( iteratorResult ) {
-                    var resolvePromise = function ( value ) {
+                    var pipeNextPromise = function ( value ) {
                         // Once the promise has returned with a value, we need to
                         // pipe that value back into the generator function, which is
                         // currently paused on a "yield" statement. When we call
@@ -60,7 +57,7 @@ module.exports = {
                         // this resolution handler, which will cause the promise to be
                         // rejected.
                     };
-                    var rejectPromise = function ( reason ) {
+                    var pipeRejectedPromise = function ( reason ) {
 
                         // If the promise value from the previous step results in a
                         // rejection, we need to pipe that rejection back into the
@@ -96,26 +93,21 @@ module.exports = {
                     // If the generator is NOT DONE iterating through its function body, we need
                     // to bridge the gap between the yields. We can do this by turning each step
                     // into a promise that can build on itself recursively.
-                    var intermediaryPromise = Promise
+                    return Promise
                     // Normalize the value returned by the iterator in order to ensure that
                     // its a promise (so that we know it is "thenable").
                         .resolve( iteratorResult.value )
-                        .then( resolvePromise, rejectPromise );
-
-                    return intermediaryPromise;
+                        .then( pipeNextPromise, pipeRejectedPromise );
                 };
-
                 // function* () {
                 // var a = yield( getA() ); // (1)
                 // var b = yield( getB() ); // (2)
                 // return( [ a, b ] ); // (3)
                 // }
-
                 // When we initiate the iteration, we need to catch any errors that may occur
                 // before the first "yield". Such an error will short-circuit the process and
                 // result in a rejected promise.
                 try {
-
                     // When we call .next() here, we are kicking off the iteration of the
                     // generator produced by our generator function. The function will start
                     // executing and run until it hits the first "yield" statement (1), which
