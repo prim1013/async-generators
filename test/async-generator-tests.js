@@ -46,4 +46,32 @@ describe( 'Async Generator Tests', function () {
         asyncGenerator.run( 4, promises ).then( makeAssertions, onRejected );
     } );
 
+    it( 'should love me', function ( done ) {
+        var expected = {pizza: 'pepperoni'};
+        var findById = function () {
+            return new Promise( function ( resolve ) {
+                resolve( expected );
+            } );
+        };
+        var promisesGenerator = function * () {
+            return yield(findById.apply( this, arguments ))
+        };
+        var spawn = function ( gen ) {
+            var iterator = gen.apply( this, arguments );
+            var iteratorResult = iterator.next();
+
+            return Promise.resolve( iteratorResult.value );
+        };
+        var makeAssertions = function ( value ) {
+            assert.deepEqual( value, expected );
+            done();
+        };
+        var onRejected = function () {
+            assert.equal( 1, 0, 'async generator error' );
+            done();
+        };
+
+        spawn( promisesGenerator ).then( makeAssertions, onRejected );
+    } );
+
 } );
